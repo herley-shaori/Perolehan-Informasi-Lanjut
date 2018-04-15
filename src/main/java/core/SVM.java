@@ -8,6 +8,7 @@ package core;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Timestamp;
 import libsvm.svm;
 import libsvm.svm_model;
 import libsvm.svm_node;
@@ -27,7 +28,7 @@ public class SVM {
     private svm_model currentSVMModel;
 
     // Constant
-    public static int MANUAL_TWEET_SELECTION = 100;
+    public static double MANUAL_TWEET_SELECTION = 0.4;
 
     public SVM(Connection connection) {
 
@@ -144,19 +145,29 @@ public class SVM {
                 // 5. Retrain Classifier with tex
                 {
                     System.out.println("Memulai pelatihan kedua...");
-                    dataLatih.addAll(tex);
-                    this.trainingPreparation(dataLatih);
+//                    dataLatih.addAll(tex);
+//                    this.trainingPreparation(dataLatih);
                     System.out.println("Pelatihan kedua selesai");
                 }
                 // 6-16. Manual Selection based on Probability
                 System.out.println("Pemilihan Jawaban Manual... ");
                 {
-                    this.connection.prepareStatement("insert into permanent (account_age, no_follower, no_following, no_userfavourites, no_list, no_tweets, no_retweets, no_hashtag, no_usermention, no_urls, no_char, no_digits, class) select account_age, no_follower, no_following, no_userfavourites, no_list, no_tweets, no_retweets, no_hashtag, no_usermention, no_urls, no_char, no_digits, class from accumulator order by age_total_score desc fetch first " + SVM.MANUAL_TWEET_SELECTION + " rows only").executeUpdate();
+                    rs = this.connection.prepareStatement("select count(*) as jumlah from accumulator").executeQuery();
+                    rs.next();
+                    double jumlah = rs.getInt("jumlah");
+                    int totalPilihan = new Double(SVM.MANUAL_TWEET_SELECTION * jumlah).intValue();
+                    // delete isi tabel permanent, karena semua yang terbaik ada di tabel accumulator.
+                    this.connection.prepareStatement("delete from permanent").executeUpdate();
+                    this.connection.prepareStatement("insert into permanent (account_age, no_follower, no_following, no_userfavourites, no_list, no_tweets, no_retweets, no_hashtag, no_usermention, no_urls, no_char, no_digits, class) select account_age, no_follower, no_following, no_userfavourites, no_list, no_tweets, no_retweets, no_hashtag, no_usermention, no_urls, no_char, no_digits, class from accumulator order by age_total_score desc fetch first " + totalPilihan + " rows only").executeUpdate();
                 }
                 System.out.println("Hari : " + this.hariMasaLampau + " Selesai");
                 System.out.println("#########################################");
                 this.hariMasaLampau++;
             }
+            // save svm model
+            Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+            final String fileName = timestamp+"SVM";
+            svm.svm_save_model(fileName, this.currentSVMModel);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -234,7 +245,7 @@ public class SVM {
             double[] prob_estimates = new double[totalClasses];
             yPred[k] = svm.svm_predict_probability(model, nodes, prob_estimates);
             double predicted = svm.svm_predict_probability(model, nodes, prob_estimates);
-
+            
             // 4. Spam Tweets Classified
             if (predicted == 0.0) {
                 final BigList<Double> dalam = new BigList();
