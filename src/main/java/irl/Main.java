@@ -5,15 +5,8 @@
  */
 package irl;
 
-import core.SVM;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.util.List;
-import org.apache.commons.text.StringTokenizer;
 
 /**
  *
@@ -26,29 +19,34 @@ public class Main {
         try {
             Class.forName("org.apache.derby.jdbc.ClientDriver");
             connection = DriverManager.getConnection("jdbc:derby://localhost:1527/coba", args[0], args[1]);
+            
+            //<editor-fold defaultstate="collapsed" desc="Detection Rate">
+//            final DetectionRate detectionRate  = new DetectionRate(connection);
+            
+//</editor-fold>
 
             //<editor-fold defaultstate="collapsed" desc="Raw Data Preparation">
             /**
              * Raw Data.
              */
-            for (int i = 8; i <= 10; i++) {
-                final File file = new File("D:\\Dataset\\Formatted Spam Drift - IRL\\" + i + ".csv");
-                final BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
-                String total = "";
-                while ((total = bufferedReader.readLine()) != null) {
-                    List<String> tokenList = new StringTokenizer(total, ",").getTokenList();
-                    PreparedStatement ps = connection.prepareStatement("insert into hari" + i + " (account_age, no_follower, no_following, no_userfavourites, no_list, no_tweets, no_retweets, no_hashtag, no_usermention, no_urls, no_char, no_digits, class) values (?,?,?,?,?,?,?,?,?,?,?,?,?)");
-                    for (int j = 1; j <= 12; j++) {
-                        ps.setInt(j, Integer.parseInt(tokenList.get(j - 1)));
-                    }
-                    if (tokenList.get(12).equals("spammer")) {
-                        ps.setInt(13, 0);
-                    } else {
-                        ps.setInt(13, 1);
-                    }
-                    ps.executeUpdate();
-                }
-            }
+//            for (int i = 8; i <= 10; i++) {
+//                final File file = new File("D:\\Dataset\\Formatted Spam Drift - IRL\\" + i + ".csv");
+//                final BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
+//                String total = "";
+//                while ((total = bufferedReader.readLine()) != null) {
+//                    List<String> tokenList = new StringTokenizer(total, ",").getTokenList();
+//                    PreparedStatement ps = connection.prepareStatement("insert into hari" + i + " (account_age, no_follower, no_following, no_userfavourites, no_list, no_tweets, no_retweets, no_hashtag, no_usermention, no_urls, no_char, no_digits, class) values (?,?,?,?,?,?,?,?,?,?,?,?,?)");
+//                    for (int j = 1; j <= 12; j++) {
+//                        ps.setInt(j, Integer.parseInt(tokenList.get(j - 1)));
+//                    }
+//                    if (tokenList.get(12).equals("spammer")) {
+//                        ps.setInt(13, 0);
+//                    } else {
+//                        ps.setInt(13, 1);
+//                    }
+//                    ps.executeUpdate();
+//                }
+//            }
 //</editor-fold>
 
             //<editor-fold defaultstate="collapsed" desc="Zscore">
@@ -239,6 +237,6 @@ public class Main {
 
         //<editor-fold defaultstate="collapsed" desc="Normalisasi Z-Score">
 //</editor-fold>
-        final SVM svm = new SVM(connection);
+//        final SVM svm = new SVM(connection);
     }
 }
